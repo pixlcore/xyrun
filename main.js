@@ -12,7 +12,9 @@ const JSONStream = require('pixl-json-stream');
 const PixlRequest = require('pixl-request');
 const Tools = require('pixl-tools');
 const pkg = require('./package.json');
+
 const noop = function() {};
+const async = Tools.async;
 
 const app = {
 	
