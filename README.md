@@ -2,7 +2,7 @@
 
 **xyOps Remote Job Runner (xyRun)** is a companion to the [xyOps](https://xyops.io) workflow automation and server monitoring platform.  It is a wrapper for running remote jobs inside Docker containers, or over a remote SSH connection.
 
-The idea is that when a job is running "remotely" (i.e. not a direct child process of [xySat](https://github.com/pixlcore/xysat)) then we cannot monitor system resources for the job.  Also, input and output files simply do not work in these cases (because xySat expects them to be on the local filesystem where it is running).  xyRun handles all these complexites for you by sitting "in between" your job and xySat.  xyRun should run *inside* the container or on the far end of the SSH connection, where your job process is running.
+The idea is that when a job is running "remotely" (i.e. not a direct child process of [xySat](https://github.com/pixlcore/xysat)) then we cannot monitor system resources for the job.  Also, input and output files simply do not work in these cases (because xySat expects them to be on the local filesystem where it is running).  xyRun handles all these complexities for you by sitting "in between" your job and xySat.  xyRun should run *inside* the container or on the far end of the SSH connection, where your job process is running.
 
 To use xyRun in a xyOps Event Plugin, make sure you set the Plugin's `runner` property to `true`.  This hint tells xyOps (and ultimately xySat) that the job is running remotely out if its reach, and it should not perform the usual process and network monitoring, and file management.  Those duties get delegated to xyRun.
 
