@@ -8,7 +8,7 @@ To use xyRun in a xyOps Event Plugin, make sure you set the Plugin's `runner` pr
 
 ## Features
 
-- Handles monitoring procesess, network connections, CPU and memory usage of remote jobs, and passing those metrics back to xyOps.
+- Handles monitoring processes, network connections, CPU and memory usage of remote jobs, and passing those metrics back to xyOps.
 - Handles input files by creating a temporary directory for you job and pre-downloading all files from the xyOps master server.
 - Handles output files by intercepting the `files` message and uploading them directly to the xyOps master server.
 
