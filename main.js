@@ -16,6 +16,8 @@ const pkg = require('./package.json');
 const noop = function() {};
 const async = Tools.async;
 
+process.title = "xyRun";
+
 const app = {
 	
 	activeJobs: {},
@@ -436,9 +438,6 @@ const app = {
 				
 				if (!file.path) return; // sanity
 				
-				// prepend job cwd if path is not absolute
-				if (!Path.isAbsolute(file.path)) file.path = Path.join(job.cwd, file.path);
-				
 				if (file.filename) {
 					// if user specified a custom filename, then do not perform a glob
 					to_upload.push(file);
@@ -463,7 +462,7 @@ const app = {
 		// upload all job files (from user) if applicable
 		var self = this;
 		var final_files = [];
-		var server_id = job.server;
+		
 		if (!job.files || !job.files.length || !Tools.isaArray(job.files)) return callback();
 		
 		async.eachSeries( job.files,
@@ -503,7 +502,7 @@ const app = {
 						filename: filename, 
 						path: json.key, 
 						size: json.size, 
-						server: server_id, 
+						server: job.server, 
 						job: job.id 
 					});
 					
@@ -567,8 +566,8 @@ const app = {
 						return;
 					}
 					
-					// update job data
-					console.log( JSON.stringify({ xy: 1, procs: job.procs, conns: job.conns, cpu: job.cpu, mem: job.mem }) );
+					// update job data with stats in tow
+					console.log( JSON.stringify({ xy: 1, rpid: process.pid, procs: job.procs, conns: job.conns, cpu: job.cpu, mem: job.mem }) );
 					
 					self.jobTickInProgress = false;
 				}
@@ -579,20 +578,21 @@ const app = {
 	measureJobResources(job, pids) {
 		// scan process list for all processes that are descendents of job pid
 		delete job.procs;
+		var root_pid = process.pid;
 		
-		if (pids[ job.pid ]) {
+		if (pids[ root_pid ]) {
 			// add all procs into job
 			job.procs = {};
-			job.procs[ job.pid ] = pids[ job.pid ];
+			job.procs[ root_pid ] = pids[ root_pid ];
 			
-			var info = pids[ job.pid ];
+			var info = pids[ root_pid ];
 			var cpu = info.cpu;
 			var mem = info.memRss;
 			
 			// also consider children of the child (up to 100 generations deep)
 			var levels = 0;
 			var family = {};
-			family[ job.pid ] = 1;
+			family[ root_pid ] = 1;
 			
 			while (Tools.numKeys(family) && (++levels <= 100)) {
 				for (var fpid in family) {
