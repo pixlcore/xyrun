@@ -135,8 +135,12 @@ const app = {
 		var child_args = process.argv.slice(2);
 		var child_cmd = child_args.shift();
 		var child_opts = {
-			env: Object.assign( {}, process.env )
+			env: Object.assign( {}, process.env, job.secrets || {} )
 		};
+		
+		child_opts.env['XYOPS'] = 'runner-' + pkg.version;
+		child_opts.env['JOB_ID'] = job.id;
+		child_opts.env['JOB_NOW'] = job.now;
 		
 		if (!child_cmd && job.params && job.params.script) {
 			// no direct command specified, but user wants a "script" executed from the job params
@@ -218,6 +222,16 @@ const app = {
 			
 			child_opts.uid = parseInt( child_opts.uid );
 			child_opts.gid = parseInt( child_opts.gid );
+		}
+		
+		// add plugin params as env vars, expand $INLINE vars
+		if (job.params) {
+			for (var key in job.params) {
+				child_opts.env[ key.replace(/\W+/g, '_') ] = 
+					(''+job.params[key]).replace(/\$(\w+)/g, function(m_all, m_g1) {
+					return (m_g1 in child_opts.env) ? child_opts.env[m_g1] : '';
+				});
+			}
 		}
 		
 		// windows additions
