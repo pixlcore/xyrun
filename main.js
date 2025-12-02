@@ -131,8 +131,26 @@ const app = {
 		var child = null;
 		var worker = {};
 		
+		// setup environment for child
 		var child_args = process.argv.slice(2);
 		var child_cmd = child_args.shift();
+		var child_opts = {
+			env: Object.assign( {}, process.env )
+		};
+		
+		if (!child_cmd && job.params && job.params.script) {
+			// no direct command specified, but user wants a "script" executed from the job params
+			var script_file = Path.join( job.cwd, 'xyops-script-temp-' + job.id + '.sh' );
+			child_cmd = Path.resolve(script_file);
+			child_args = [];
+			
+			// quickly write out script file and make it executable
+			Tools.mkdirpSync( job.cwd, { mode: 0o777 } );
+			fs.writeFileSync( script_file, job.params.script.replace(/\r\n/g, "\n"), { mode: 0o775 } );
+			
+			// set the cwd to the job cwd, as it's a more controlled environment
+			child_opts.cwd = job.cwd;
+		}
 		
 		if (!child_cmd) {
 			// no command!
@@ -156,11 +174,6 @@ const app = {
 		}
 		
 		console.log( "Running command: " + child_cmd, child_args );
-		
-		// setup environment for child
-		var child_opts = {
-			env: Object.assign( {}, process.env )
-		};
 		
 		// get uid / gid info for child env vars
 		if (!this.platform.windows) {
@@ -337,7 +350,7 @@ const app = {
 			if (job.kill === 'none') {
 				// kill none, just unref and finish
 				worker.child.unref();
-				this.shutdown();
+				this.finishJob();
 				return;
 			}
 			
@@ -464,6 +477,15 @@ const app = {
 		var final_files = [];
 		
 		if (!job.files || !job.files.length || !Tools.isaArray(job.files)) return callback();
+		
+		if (!job.base_url) {
+			console.error("Error: Cannot upload files: Missing 'base_url' property in job data.");
+			return callback();
+		}
+		if (!job.auth_token) {
+			console.error("Error: Cannot upload files: Missing 'auth_token' property in job data.");
+			return callback();
+		}
 		
 		async.eachSeries( job.files,
 			function(file, callback) {

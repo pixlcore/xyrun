@@ -53,6 +53,12 @@ Then wrap your remote command with a `xyrun` prefix:
 ssh user@target xyrun node /path/to/your-script.js
 ```
 
+# Script Mode
+
+When no sub-command is specified on the CLI, xyRun will look inside the job JSON data (passed in via STDIN) for a parameter named `script`.  If this is found, it is quickly written out to a temp file, made executable (775), and that is what it launches.  It is assumed that the provided `script` will contain a proper [Shebang](https://en.wikipedia.org/wiki/Shebang_%28Unix%29) line.
+
+This allows xyRun to act as a "Remote Shell Plugin" for certain xyOps jobs that require it.
+
 # Development
 
 You can install the source code by using [Git](https://en.wikipedia.org/wiki/Git) ([Node.js](https://nodejs.org/) is also required):
