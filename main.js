@@ -177,8 +177,6 @@ const app = {
 			return;
 		}
 		
-		console.log( "Running command: " + child_cmd, child_args );
-		
 		// get uid / gid info for child env vars
 		if (!this.platform.windows) {
 			child_opts.uid = job.uid || process.getuid();
