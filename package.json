@@ -1,6 +1,6 @@
 {
 	"name": "@pixlcore/xyrun",
-	"version": "1.0.5",
+	"version": "1.0.6",
 	"description": "Remote job runner script for xyOps.",
 	"author": "Joseph Huckaby <jhuckaby@pixlcore.com>",
 	"homepage": "https://github.com/pixlcore/xyrun",

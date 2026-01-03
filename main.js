@@ -275,7 +275,7 @@ const app = {
 		stream.on('json', function(data) {
 			// received data from child
 			if (!self.handleChildResponse(job, worker, data)) {
-				// unrecognized json, emit as raw text
+				// json should be passed to parent
 				stream.emit('text', JSON.stringify(data) + "\n");
 			}
 		} );
@@ -490,6 +490,10 @@ const app = {
 		
 		if (!job.files || !job.files.length || !Tools.isaArray(job.files)) return callback();
 		
+		// make sure original (pre-upload) file refs never get into final job
+		var job_files = job.files;
+		delete job.files;
+		
 		if (!job.base_url) {
 			console.error("Error: Cannot upload files: Missing 'base_url' property in job data.");
 			return callback();
@@ -499,7 +503,7 @@ const app = {
 			return callback();
 		}
 		
-		async.eachSeries( job.files,
+		async.eachSeries( job_files,
 			function(file, callback) {
 				var filename = Path.basename(file.filename || file.path).replace(/[^\w\-\+\.\,\s\(\)\[\]\{\}\'\"\!\&\^\%\$\#\@\*\?\~]+/g, '_');
 				console.log( "Uploading file: " + filename );
