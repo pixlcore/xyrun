@@ -100,6 +100,7 @@ const app = {
 							if (err) {
 								return callback( new Error("Failed to download job file: " + file.filename + ": " + (err.message || err)) );
 							}
+							delete file.path;
 							callback();
 						} ); // request.get
 					},
