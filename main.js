@@ -233,6 +233,18 @@ const app = {
 			}
 		}
 		
+		// add workflow params if applicable, with special workflow_ key prefix
+		if (job.workflow && job.workflow.params) {
+			for (var key in job.workflow.params) {
+				if (typeof(job.workflow.params[key]) != 'object') {
+					child_opts.env[ 'workflow_' + key.replace(/\W+/g, '_') ] = 
+						(''+job.workflow.params[key]).replace(/\$(\w+)/g, function(m_all, m_g1) {
+						return (m_g1 in child_opts.env) ? child_opts.env[m_g1] : '';
+					});
+				}
+			}
+		}
+		
 		// windows additions
 		if (this.platform.windows) {
 			child_opts.windowsHide = true;
