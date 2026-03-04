@@ -33,7 +33,6 @@ const app = {
 		
 		// create a http request instance for various tasks
 		this.request = new PixlRequest( "xyOps Job Runner v" + pkg.version );
-		this.request.setTimeout( 300 * 1000 );
 		this.request.setFollow( 5 );
 		this.request.setAutoError( true );
 		this.request.setKeepAlive( true );
@@ -68,6 +67,19 @@ const app = {
 		this.timer = setInterval( this.tick.bind(this), 1000 );
 	},
 	
+	getFileOpts() {
+		// get file upload/download specific set of opts for pixl-request, configured separately
+		return this.job.http_file_opts || {
+			timeout: 300 * 1000,
+			idleTimeout: 30 * 1000,
+			connectTimeout: 10 * 1000,
+			
+			retries: 8,
+			retryDelay: 50,
+			retryDelayMax: 8 * 1000
+		};
+	},
+	
 	prepLaunchJob() {
 		// setup temp dir for job, and download any files passed to us
 		var self = this;
@@ -90,7 +102,7 @@ const app = {
 					function(file, callback) {
 						var dest_file = Path.join( job.cwd, file.filename );
 						var url = job.base_url + '/' + file.path;
-						var opts = Tools.mergeHashes( job.socket_opts || {}, {
+						var opts = Object.assign( {}, job.socket_opts || {}, self.getFileOpts(), {
 							download: dest_file
 						});
 						
@@ -522,7 +534,7 @@ const app = {
 				console.log( "Uploading file: " + filename );
 				
 				var url = job.base_url + '/api/app/upload_job_file';
-				var opts = Tools.mergeHashes( job.socket_opts || {}, {
+				var opts = Object.assign( {}, job.socket_opts || {}, self.getFileOpts(), {
 					"files": {
 						file1: [file.path, filename]
 					},
@@ -874,6 +886,8 @@ const app = {
 		} // windows
 		
 		var info = { list: [] };
+		if (!this.psBin) return callback(info);
+		
 		var ps_args = [];
 		var ps_opts = {
 			env: Object.assign( {}, process.env ),
