@@ -67,9 +67,9 @@ const app = {
 		this.timer = setInterval( this.tick.bind(this), 1000 );
 	},
 	
-	getFileOpts() {
+	getFileOpts(job) {
 		// get file upload/download specific set of opts for pixl-request, configured separately
-		return this.job.http_file_opts || {
+		return job.http_file_opts || {
 			timeout: 300 * 1000,
 			idleTimeout: 30 * 1000,
 			connectTimeout: 10 * 1000,
@@ -102,7 +102,7 @@ const app = {
 					function(file, callback) {
 						var dest_file = Path.join( job.cwd, file.filename );
 						var url = job.base_url + '/' + file.path;
-						var opts = Object.assign( {}, job.socket_opts || {}, self.getFileOpts(), {
+						var opts = Object.assign( {}, job.socket_opts || {}, self.getFileOpts(job), {
 							download: dest_file
 						});
 						
@@ -534,7 +534,7 @@ const app = {
 				console.log( "Uploading file: " + filename );
 				
 				var url = job.base_url + '/api/app/upload_job_file';
-				var opts = Object.assign( {}, job.socket_opts || {}, self.getFileOpts(), {
+				var opts = Object.assign( {}, job.socket_opts || {}, self.getFileOpts(job), {
 					"files": {
 						file1: [file.path, filename]
 					},
