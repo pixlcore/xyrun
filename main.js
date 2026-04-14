@@ -106,7 +106,7 @@ const app = {
 							download: dest_file
 						});
 						
-						console.log( `Downloading file: ${dest_file} (${Tools.getTextFromBytes(file.size)})` );
+						console.log( `xyRun: Downloading file: ${dest_file} (${Tools.getTextFromBytes(file.size)})` );
 						
 						self.request.get( url, opts, function(err, resp, data, perf) {
 							if (err) {
@@ -125,7 +125,7 @@ const app = {
 				// something went wrong
 				job.pid = 0;
 				job.code = 1;
-				job.description = "Runner: " + err;
+				job.description = "xyRun: " + err;
 				console.error(job.description);
 				self.activeJobs[ job.id ] = job;
 				self.finishJob( job );
@@ -173,7 +173,7 @@ const app = {
 			// no command!
 			job.pid = 0;
 			job.code = 1;
-			job.description = "Runner: No command specified.";
+			job.description = "xyRun: No command specified.";
 			console.error(job.description);
 			self.activeJobs[ job.id ] = job;
 			self.finishJob();
@@ -183,7 +183,7 @@ const app = {
 			// not in runner mode
 			job.pid = 0;
 			job.code = 1;
-			job.description = "Job not launched in runner mode (Set runner flag in event plugin).";
+			job.description = "xyRun: Job not launched in runner mode (Set runner flag in event plugin).";
 			console.error(job.description);
 			self.activeJobs[ job.id ] = job;
 			self.finishJob();
@@ -207,7 +207,7 @@ const app = {
 				// user not found
 				job.pid = 0;
 				job.code = 1;
-				job.description = "Plugin Error: User does not exist: " + child_opts.uid;
+				job.description = "xyRun: Plugin Error: User does not exist: " + child_opts.uid;
 				console.error(job.description);
 				this.activeJobs[ job.id ] = job;
 				this.finishJob();
@@ -223,7 +223,7 @@ const app = {
 					// gid not found
 					job.pid = 0;
 					job.code = 1;
-					job.description = "Plugin Error: Group does not exist: " + job.gid;
+					job.description = "xyRun: Plugin Error: Group does not exist: " + job.gid;
 					console.error(job.description);
 					this.activeJobs[ job.id ] = job;
 					this.finishJob();
@@ -276,7 +276,7 @@ const app = {
 			if (child) child.on('error', function() {}); // prevent crash
 			job.pid = 0;
 			job.code = 1;
-			job.description = "Runner: Child spawn error: " + child_cmd + ": " + Tools.getErrorDescription(err);
+			job.description = "xyRun: Child spawn error: " + child_cmd + ": " + Tools.getErrorDescription(err);
 			console.error(job.description);
 			this.activeJobs[ job.id ] = job;
 			this.finishJob();
@@ -313,14 +313,14 @@ const app = {
 		
 		stream.on('error', function(err, text) {
 			// Probably a JSON parse error (child emitting garbage)
-			console.error( "Child stream error: Job ID " + job.id + ": PID " + job.pid + ": " + err );
+			console.error( "xyRun: Child stream error: Job ID " + job.id + ": PID " + job.pid + ": " + err );
 			if (text) process.stdout.write(text);
 		} );
 		
 		child.on('error', function (err) {
 			// child error
 			job.code = 1;
-			job.description = "Runner: Child process error: " + Tools.getErrorDescription(err);
+			job.description = "xyRun: Child process error: " + Tools.getErrorDescription(err);
 			worker.child_exited = true;
 			console.error(job.description);
 			self.finishJob();
@@ -329,7 +329,7 @@ const app = {
 		child.on('close', function (code, signal) {
 			// child exited
 			if (code || signal) {
-				console.error( "Child exited with code: " + (code || signal) );
+				console.error( "xyRun: Child exited with code: " + (code || signal) );
 			}
 			worker.child_exited = true;
 			self.finishJob();
@@ -375,7 +375,10 @@ const app = {
 	
 	abortJob() {
 		// send kill signal if child is active
-		console.error(`Caught abort signal, shutting down`);
+		if (this.aborted) return;
+		this.aborted = true;
+		
+		console.error(`xyRun: Caught abort signal, shutting down`);
 		
 		var job = this.job;
 		var worker = this.worker;
@@ -396,7 +399,7 @@ const app = {
 				if ((job.kill === 'all') && job.procs && Tools.firstKey(job.procs)) {
 					// sig-kill ALL job processes
 					var pids = Object.keys(job.procs);
-					console.error( "Children did not exit, killing harder: " + pids.join(', '));
+					console.error( "xyRun: Children did not exit, killing harder: " + pids.join(', '));
 					pids.forEach( function(pid) {
 						try { process.kill(pid, 'SIGKILL'); }
 						catch(e) {;}
@@ -404,7 +407,7 @@ const app = {
 				}
 				else {
 					// sig-kill parent only
-					console.error( "Child did not exit, killing harder: " + job.pid);
+					console.error( "xyRun: Child did not exit, killing harder: " + job.pid);
 					worker.child.kill('SIGKILL');
 				}
 			}, 10000 );
@@ -413,7 +416,7 @@ const app = {
 			if ((job.kill === 'all') && job.procs && Tools.firstKey(job.procs)) {
 				// sig-term ALL job processes
 				var pids = Object.keys(job.procs);
-				console.log( "Killing all job processes: " + pids.join(', '));
+				console.log( "xyRun: Killing all job processes: " + pids.join(', '));
 				pids.forEach( function(pid) {
 					try { process.kill(pid, 'SIGTERM'); }
 					catch(e) {;}
@@ -421,7 +424,7 @@ const app = {
 			}
 			else {
 				// sig-term parent only
-				console.log( "Killing job process: " + job.pid);
+				console.log( "xyRun: Killing job process: " + job.pid);
 				worker.child.kill('SIGTERM');
 			}
 		}
@@ -450,7 +453,7 @@ const app = {
 		this.prepUploadJobFiles(job, function(err) {
 			if (err) {
 				job.code = err.code || 'upload';
-				job.description = "Runner: " + (err.message || err);
+				job.description = "xyRun: " + (err.message || err);
 			}
 			
 			// did we upload files?  if so, send the metadata along now
@@ -520,18 +523,18 @@ const app = {
 		delete job.files;
 		
 		if (!job.base_url) {
-			console.error("Error: Cannot upload files: Missing 'base_url' property in job data.");
+			console.error("xyRun Error: Cannot upload files: Missing 'base_url' property in job data.");
 			return callback();
 		}
 		if (!job.auth_token) {
-			console.error("Error: Cannot upload files: Missing 'auth_token' property in job data.");
+			console.error("xyRun Error: Cannot upload files: Missing 'auth_token' property in job data.");
 			return callback();
 		}
 		
 		async.eachSeries( job_files,
 			function(file, callback) {
 				var filename = Path.basename(file.filename || file.path).replace(/[^\w\-\+\.\,\s\(\)\[\]\{\}\'\"\!\&\^\%\$\#\@\*\?\~]+/g, '_');
-				console.log( "Uploading file: " + filename );
+				console.log( "xyRun: Uploading file: " + filename );
 				
 				var url = job.base_url + '/api/app/upload_job_file';
 				var opts = Object.assign( {}, job.socket_opts || {}, self.getFileOpts(job), {
@@ -762,7 +765,7 @@ const app = {
 		
 		cp.exec( this.ssBin + ' -nutipaO', { timeout: 1000, maxBuffer: 1024 * 1024 * 32 }, function(err, stdout, stderr) {
 			if (err) {
-				console.error("Failed to launch ss: " + err);
+				console.error("xyRun: Failed to launch ss: " + err);
 				return callback();
 			}
 			
