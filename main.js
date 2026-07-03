@@ -633,7 +633,7 @@ const app = {
 					}
 					
 					// update job data with stats in tow
-					console.log( JSON.stringify({ xy: 1, rpid: process.pid, procs: job.procs, conns: job.conns, cpu: job.cpu, mem: job.mem }) );
+					console.log( JSON.stringify({ xy: 1, rpid: process.pid, procs: self.job.procs, conns: self.job.conns, cpu: self.job.cpu, mem: self.job.mem }) );
 					
 					self.jobTickInProgress = false;
 				}
