@@ -330,6 +330,19 @@ const app = {
 			// child exited
 			if (code || signal) {
 				console.error( "xyRun: Child exited with code: " + (code || signal) );
+				
+				// fall back to the exit status only if no explicit result was reported
+				// an explicit code of 0 must still take precedence over the exit status
+				if (!Object.hasOwn(job, 'code')) {
+					job.code = code || 1;
+					
+					// preserve any description already supplied by the child
+					if (!job.description) {
+						job.description = signal ?
+							("xyRun: Child terminated by signal: " + signal) :
+							("xyRun: Child exited with code: " + code);
+					}
+				}
 			}
 			worker.child_exited = true;
 			self.finishJob();
